@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Truth Guard AI - Advanced Fact Checking System</title>
+    <meta name="description" content="Professional AI-powered fact-checking system with real-time analysis and cross-verification">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo-icon">🛡️</div>
+                <div>
+                    <h1 class="main-title">Truth Guard AI</h1>
+                    <p class="tagline">Advanced AI-Powered Fact Verification System</p>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-section="analyzer">Analyzer</button>
+                <button class="nav-btn" data-section="reports">Reports</button>
+                <button class="nav-btn" data-section="stats">Statistics</button>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Analyzer Section -->
+            <section id="analyzer" class="content-section active">
+                <div class="analyzer-grid">
+                    <!-- Input Panel -->
+                    <div class="input-panel glass-card">
+                        <h2>Input Analysis</h2>
+                        <div class="input-type-selector">
+                            <button class="type-btn active" data-type="text">Text Analysis</button>
+                            <button class="type-btn" data-type="url">URL Verification</button>
+                        </div>
+                        
+                        <div class="input-section">
+                            <textarea 
+                                id="inputText" 
+                                placeholder="Enter text or paste URL to analyze for factual accuracy..."
+                                rows="6"
+                            ></textarea>
+                            <div class="button-group">
+                                <button id="analyzeBtn" class="btn btn-primary glow-btn">
+                                    <span class="btn-icon">🔍</span>
+                                    Analyze Content
+                                </button>
+                                <button id="clearBtn" class="btn btn-secondary">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Truth Meter -->
+                    <div class="truth-meter-panel glass-card">
+                        <h2>Truth Meter</h2>
+                        <div class="truth-meter">
+                            <svg class="meter-svg" viewBox="0 0 200 120">
+                                <!-- Background Arc -->
+                                <path d="M 20 100 A 80 80 0 0 1 180 100" 
+                                      fill="none" 
+                                      stroke="rgba(255,255,255,0.1)" 
+                                      stroke-width="8"/>
+                                
+                                <!-- Red Zone -->
+                                <path d="M 20 100 A 80 80 0 0 1 100 20" 
+                                      fill="none" 
+                                      stroke="#ff4444" 
+                                      stroke-width="6"
+                                      opacity="0.8"/>
+                                
+                                <!-- Yellow Zone -->
+                                <path d="M 100 20 A 80 80 0 0 1 140 35" 
+                                      fill="none" 
+                                      stroke="#ffbb33" 
+                                      stroke-width="6"
+                                      opacity="0.8"/>
+                                
+                                <!-- Green Zone -->
+                                <path d="M 140 35 A 80 80 0 0 1 180 100" 
+                                      fill="none" 
+                                      stroke="#00ff88" 
+                                      stroke-width="6"
+                                      opacity="0.8"/>
+                                
+                                <!-- Needle -->
+                                <g class="needle" transform="rotate(0 100 100)">
+                                    <line x1="100" y1="100" x2="100" y2="30" 
+                                          stroke="#00d4ff" 
+                                          stroke-width="3" 
+                                          stroke-linecap="round"/>
+                                    <circle cx="100" cy="100" r="6" fill="#00d4ff"/>
+                                </g>
+                            </svg>
+                            <div class="meter-labels">
+                                <span class="label-fake">FAKE</span>
+                                <span class="label-suspicious">SUSPICIOUS</span>
+                                <span class="label-real">REAL</span>
+                            </div>
+                            <div class="score-display">
+                                <span id="truthScore">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="results-panel glass-card">
+                        <h2>Analysis Results</h2>
+                        <div id="resultsContent">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">📊</div>
+                                <p>Enter content above to see detailed analysis results</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div class="search-panel glass-card">
+                        <h2>Cross-Verification Sources</h2>
+                        <div id="searchResults">
+                            <div class="placeholder-content">
+                                <div class="placeholder-icon">🔗</div>
+                                <p>Verification sources will appear here after analysis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="content-section">
+                <div class="reports-header">
+                    <h2>Analysis Reports</h2>
+                    <button id="refreshReports" class="btn btn-secondary">Refresh</button>
+                </div>
+                <div class="reports-container">
+                    <div id="reportsList" class="reports-list">
+                        <!-- Reports will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics Section -->
+            <section id="stats" class="content-section">
+                <div class="stats-header">
+                    <h2>System Statistics</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value" id="totalReports">--</div>
+                        <div class="stat-label">Total Analyses</div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="realCount">--</div>
+                        <div class="stat-label">Verified Real</div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value" id="suspiciousCount">--</div>
+                        <div class="stat-label">Suspicious</div>
+                    </div>
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-value" id="fakeCount">--</div>
+                        <div class="stat-label">Detected Fake</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Analyzing content...</p>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
