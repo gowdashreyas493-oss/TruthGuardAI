@@ -1,8 +1,9 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
-import os, requests
+import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, quote_plus
 
@@ -16,12 +17,15 @@ from textblob import TextBlob
 # SerpAPI
 from serpapi import GoogleSearch
 
+# ------------------- Paths -------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # backend folder
+FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
+
 # ------------------- Flask + DB -------------------
-# Adjusted paths for frontend folder
 app = Flask(
     __name__,
-    static_folder="../frontend",      # frontend folder contains CSS/JS
-    template_folder="../frontend"     # frontend folder contains index.html
+    static_folder=os.path.join(FRONTEND_DIR),
+    template_folder=os.path.join(FRONTEND_DIR)
 )
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///truthguard.db'
@@ -32,7 +36,7 @@ db = SQLAlchemy(app)
 class FakeNewsReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
-    label = db.Column(db.String(16), nullable=False)
+    label = db.Column(db.String(16), nullable=False)  # real/fake/suspicious/uncertain
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Create fresh database if not exists
