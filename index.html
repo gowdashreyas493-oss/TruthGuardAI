@@ -6,8 +6,8 @@
     <title>Truth Guard AI - Advanced Fact Checking System</title>
     <meta name="description" content="Professional AI-powered fact-checking system with real-time analysis and cross-verification">
 
-    <!-- Load CSS directly from frontend folder -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Load CSS from Flask static folder -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -160,7 +160,7 @@
         <div id="toastContainer" class="toast-container"></div>
     </div>
 
-    <!-- Load JS directly from frontend folder -->
-    <script src="script.js"></script>
+    <!-- Load JS from Flask static folder -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
