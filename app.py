@@ -17,7 +17,12 @@ from textblob import TextBlob
 from serpapi import GoogleSearch
 
 # ------------------- Flask + DB -------------------
-app = Flask(__name__, static_folder="frontend", template_folder="frontend")
+# Adjusted paths for frontend folder
+app = Flask(
+    __name__,
+    static_folder="../frontend",      # frontend folder contains CSS/JS
+    template_folder="../frontend"     # frontend folder contains index.html
+)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///truthguard.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -27,7 +32,7 @@ db = SQLAlchemy(app)
 class FakeNewsReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
-    label = db.Column(db.String(16), nullable=False)  # real/fake/suspicious/uncertain
+    label = db.Column(db.String(16), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Create fresh database if not exists
@@ -236,4 +241,3 @@ if __name__ == '__main__':
     port = int(os.environ.get("TG_PORT", 5000))
     debug = os.environ.get("TG_DEBUG", "1") == "1"
     app.run(host=host, port=port, debug=debug)
-
