@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Truth Guard AI - Advanced Fact Checking System</title>
     <meta name="description" content="Professional AI-powered fact-checking system with real-time analysis and cross-verification">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Load CSS directly from frontend folder -->
+    <link rel="stylesheet" href="style.css">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -60,39 +63,12 @@
                         <h2>Truth Meter</h2>
                         <div class="truth-meter">
                             <svg class="meter-svg" viewBox="0 0 200 120">
-                                <!-- Background Arc -->
-                                <path d="M 20 100 A 80 80 0 0 1 180 100" 
-                                      fill="none" 
-                                      stroke="rgba(255,255,255,0.1)" 
-                                      stroke-width="8"/>
-                                
-                                <!-- Red Zone -->
-                                <path d="M 20 100 A 80 80 0 0 1 100 20" 
-                                      fill="none" 
-                                      stroke="#ff4444" 
-                                      stroke-width="6"
-                                      opacity="0.8"/>
-                                
-                                <!-- Yellow Zone -->
-                                <path d="M 100 20 A 80 80 0 0 1 140 35" 
-                                      fill="none" 
-                                      stroke="#ffbb33" 
-                                      stroke-width="6"
-                                      opacity="0.8"/>
-                                
-                                <!-- Green Zone -->
-                                <path d="M 140 35 A 80 80 0 0 1 180 100" 
-                                      fill="none" 
-                                      stroke="#00ff88" 
-                                      stroke-width="6"
-                                      opacity="0.8"/>
-                                
-                                <!-- Needle -->
+                                <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+                                <path d="M 20 100 A 80 80 0 0 1 100 20" fill="none" stroke="#ff4444" stroke-width="6" opacity="0.8"/>
+                                <path d="M 100 20 A 80 80 0 0 1 140 35" fill="none" stroke="#ffbb33" stroke-width="6" opacity="0.8"/>
+                                <path d="M 140 35 A 80 80 0 0 1 180 100" fill="none" stroke="#00ff88" stroke-width="6" opacity="0.8"/>
                                 <g class="needle" transform="rotate(0 100 100)">
-                                    <line x1="100" y1="100" x2="100" y2="30" 
-                                          stroke="#00d4ff" 
-                                          stroke-width="3" 
-                                          stroke-linecap="round"/>
+                                    <line x1="100" y1="100" x2="100" y2="30" stroke="#00d4ff" stroke-width="3" stroke-linecap="round"/>
                                     <circle cx="100" cy="100" r="6" fill="#00d4ff"/>
                                 </g>
                             </svg>
@@ -184,6 +160,7 @@
         <div id="toastContainer" class="toast-container"></div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Load JS directly from frontend folder -->
+    <script src="script.js"></script>
 </body>
 </html>
