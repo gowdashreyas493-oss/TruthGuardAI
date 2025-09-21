@@ -2,8 +2,7 @@ flask
 flask_sqlalchemy
 flask_cors
 requests
-nltk
-numpy
-textblob
-scikit-learn
 beautifulsoup4
+nltk
+textblob
+google-search-results
