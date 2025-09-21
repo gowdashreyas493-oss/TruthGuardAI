@@ -6,3 +6,4 @@ nltk
 numpy
 textblob
 scikit-learn
+beautifulsoup4
