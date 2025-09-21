@@ -17,24 +17,9 @@ from textblob import TextBlob
 from serpapi import GoogleSearch
 
 # ------------------- Flask + DB -------------------
-# Fixed paths for proper Flask structure
-app = Flask(
-    __name__,
-    static_folder="static",      # static folder for CSS/JS
-    template_folder="templates"   # templates folder for HTML
-)
+app = Flask(__name__, static_folder="frontend", template_folder="frontend")
 CORS(app)
-
-# Use PostgreSQL on Render, SQLite locally
-database_url = os.environ.get('DATABASE_URL')
-if database_url:
-    # Fix for Render's PostgreSQL URL
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///truthguard.db'
-
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///truthguard.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -42,32 +27,21 @@ db = SQLAlchemy(app)
 class FakeNewsReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
-    label = db.Column(db.String(16), nullable=False)
+    label = db.Column(db.String(16), nullable=False)  # real/fake/suspicious/uncertain
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create database tables
-@app.before_first_request
-def create_tables():
-    try:
-        db.create_all()
-        print("Database tables created successfully!")
-    except Exception as e:
-        print(f"Database creation error: {e}")
+# Create fresh database if not exists
+with app.app_context():
+    db.create_all()
+    print("Database created successfully!")
 
 # ------------------- NLTK setup -------------------
 def ensure_nltk():
-    nltk_data_path = '/tmp/nltk_data'
-    os.makedirs(nltk_data_path, exist_ok=True)
-    nltk.data.path.append(nltk_data_path)
-    
     for pkg in ['punkt', 'stopwords', 'averaged_perceptron_tagger']:
         try:
             nltk.data.find(pkg if pkg != 'averaged_perceptron_tagger' else f'taggers/{pkg}')
         except LookupError:
-            try:
-                nltk.download(pkg, download_dir=nltk_data_path)
-            except Exception as e:
-                print(f"NLTK download failed for {pkg}: {e}")
+            nltk.download(pkg)
 
 ensure_nltk()
 
@@ -94,23 +68,16 @@ def analyze_text(text):
     if not text or len(text.strip()) < 10:
         return {"tokens": [], "sentiment": 0.0, "label": "uncertain", "preview": ""}
 
-    try:
-        tokens = [t.lower() for t in word_tokenize(text) if t.isalpha()]
-        stop = set(stopwords.words("english"))
-        tokens = [t for t in tokens if t not in stop]
-    except Exception as e:
-        # Fallback tokenization if NLTK fails
-        tokens = [t.lower() for t in text.split() if t.isalpha()]
+    tokens = [t.lower() for t in word_tokenize(text) if t.isalpha()]
+    stop = set(stopwords.words("english"))
+    tokens = [t for t in tokens if t not in stop]
 
     try:
         pos_tag(tokens)
     except Exception:
         pass
 
-    try:
-        polarity = TextBlob(text).sentiment.polarity
-    except Exception:
-        polarity = 0.0
+    polarity = TextBlob(text).sentiment.polarity
 
     sensational_words = [
         'click','shocking','unbelievable','hate','secret','miracle','cure',
@@ -137,7 +104,7 @@ def analyze_text(text):
     return {"tokens": tokens[:20], "sentiment": round(polarity, 4), "label": label, "preview": preview, "indicators": total_indicators}
 
 # ------------------- Google search -------------------
-SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "d53af08d64040d65f5bbedbf4f8a738aecec19137d839257f547b1128702e14e")
+SERPAPI_KEY = "d53af08d64040d65f5bbedbf4f8a738aecec19137d839257f547b1128702e14e"
 
 def google_search_serpapi(query, num=5):
     if not SERPAPI_KEY:
@@ -238,10 +205,10 @@ def reports():
 def stats():
     from sqlalchemy import func
     try:
-        total = db.session.query(func.count(FakeNewsReport.id)).scalar() or 0
-        real_count = db.session.query(func.count(FakeNewsReport.id)).filter(FakeNewsReport.label=="real").scalar() or 0
-        suspicious_count = db.session.query(func.count(FakeNewsReport.id)).filter(FakeNewsReport.label=="suspicious").scalar() or 0
-        fake_count = db.session.query(func.count(FakeNewsReport.id)).filter(FakeNewsReport.label=="fake").scalar() or 0
+        total = db.session.query(func.count(FakeNewsReport.id)).scalar()
+        real_count = db.session.query(func.count(FakeNewsReport.id)).filter(FakeNewsReport.label=="real").scalar()
+        suspicious_count = db.session.query(func.count(FakeNewsReport.id)).filter(FakeNewsReport.label=="suspicious").scalar()
+        fake_count = db.session.query(func.count(FakeNewsReport.id)).filter(FakeNewsReport.label=="fake").scalar()
         return jsonify({
             "total_reports": total,
             "real_count": real_count,
@@ -263,12 +230,9 @@ def top_searches():
         app.logger.exception("top_searches failed")
         return jsonify([]), 500
 
-# Health check endpoint for Render
-@app.route('/health')
-def health():
-    return jsonify({"status": "healthy"}), 200
-
 # ------------------- Run -------------------
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    host = os.environ.get("TG_HOST", "0.0.0.0")
+    port = int(os.environ.get("TG_PORT", 5000))
+    debug = os.environ.get("TG_DEBUG", "1") == "1"
+    app.run(host=host, port=port, debug=debug)
