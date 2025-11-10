@@ -6,3 +6,9 @@ beautifulsoup4
 nltk
 textblob
 google-search-results
+langdetect
+indic-nlp-library
+keras
+tensorflow
+numpy
+scikit-learn

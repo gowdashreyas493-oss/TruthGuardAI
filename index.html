@@ -34,11 +34,20 @@
                     <!-- Input Panel -->
                     <div class="input-panel glass-card">
                         <h2>Input Analysis</h2>
+                        <div class="language-selector">
+                            <label for="languageSelect">Language:</label>
+                            <select id="languageSelect">
+                                <option value="auto">Auto-detect</option>
+                                <option value="en">English</option>
+                                <option value="hi">Hindi</option>
+                                <option value="kn">Kannada</option>
+                            </select>
+                        </div>
                         <div class="input-type-selector">
                             <button class="type-btn active" data-type="text">Text Analysis</button>
                             <button class="type-btn" data-type="url">URL Verification</button>
                         </div>
-                        
+
                         <div class="input-section">
                             <textarea 
                                 id="inputText" 

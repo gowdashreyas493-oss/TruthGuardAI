@@ -12,6 +12,7 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk import pos_tag
 from textblob import TextBlob
+from langdetect import detect, LangDetectException
 
 # SerpAPI
 from serpapi import GoogleSearch
@@ -28,6 +29,7 @@ class FakeNewsReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
     label = db.Column(db.String(16), nullable=False)  # real/fake/suspicious/uncertain
+    language = db.Column(db.String(10), default="en")  # en/hi/kn
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Create fresh database if not exists
@@ -44,6 +46,55 @@ def ensure_nltk():
             nltk.download(pkg)
 
 ensure_nltk()
+
+# ------------------- Language Detection -------------------
+LANGUAGE_MAP = {
+    'en': 'English',
+    'hi': 'Hindi',
+    'kn': 'Kannada'
+}
+
+def detect_language(text):
+    try:
+        detected = detect(text)
+        if detected in ['en', 'hi', 'kn']:
+            return detected
+        elif detected.startswith('en'):
+            return 'en'
+        elif detected == 'hi':
+            return 'hi'
+        elif detected == 'kn':
+            return 'kn'
+        return 'en'
+    except LangDetectException:
+        return 'en'
+
+# ------------------- Hindi Stopwords -------------------
+HINDI_STOPWORDS = {
+    'है', 'हैं', 'का', 'की', 'के', 'और', 'या', 'नहीं', 'में', 'पर',
+    'से', 'को', 'यह', 'वह', 'जो', 'कि', 'ये', 'हो', 'होगा', 'करना',
+    'किया', 'कर', 'बहुत', 'अधिक', 'भी', 'तो', 'हीं', 'ना', 'दिया', 'है'
+}
+
+HINDI_SENSATIONAL_WORDS = {
+    'चौंकाने', 'विश्वास', 'रहस्य', 'खोज', 'सच', 'झूठ', 'नकली',
+    'षड्यंत्र', 'चमत्कार', 'शक्ति', 'सरकार', 'जानकारी', 'हैरान',
+    'खतरनाक', 'चेतावनी', 'आपातकाल', 'स्कैंडल', 'सच्चाई', 'बड़ी',
+    'विस्फोटक', 'गुप्त', 'असली', 'नाटक', 'बहाना', 'धोखा'
+}
+
+# ------------------- Kannada Stopwords -------------------
+KANNADA_STOPWORDS = {
+    'ಮತ್ತು', 'ಅಥವಾ', 'ಅವನು', 'ಅವಳು', 'ಇದು', 'ಯಾವುದು', 'ಎಲ್ಲಿ',
+    'ಯಾವಾಗ', 'ಹೇಗೆ', 'ಕ್ಯಾ', 'ಯಾರು', 'ವಾಸ್ತವವಾಗಿ', 'ಈಗ',
+    'ಕೆಲವು', 'ಆ', 'ಈ', 'ಹೆಚ್ಚು', 'ಕಡಿಮೆ', 'ಒಂದು', 'ಎರಡು'
+}
+
+KANNADA_SENSATIONAL_WORDS = {
+    'ಸುದ್ದಿ', 'ಶಾಕ್', 'ರಹಸ್ಯ', 'ನಿಜ', 'ಸುಳ್ಳು', 'ಫೇಕ್',
+    'ಷಡ್ಯಂತ್ರ', 'ಚಮತ್ಕಾರ', 'ಅನೋಖೆ', 'ತೂಪಿ', 'ಅಪರೂಪ',
+    'ಮಹತ್ವ', 'ಜೀವನ', 'ಶಕ್ತಿ', 'ನಿಷೇಧ'
+}
 
 # ------------------- Content extraction -------------------
 def extract_text_from_url(url, max_paragraphs=15):
@@ -64,9 +115,9 @@ def extract_text_from_url(url, max_paragraphs=15):
         return url, url
 
 # ------------------- NLP analysis -------------------
-def analyze_text(text):
+def analyze_text_english(text):
     if not text or len(text.strip()) < 10:
-        return {"tokens": [], "sentiment": 0.0, "label": "uncertain", "preview": ""}
+        return {"tokens": [], "sentiment": 0.0, "label": "uncertain", "preview": "", "language": "English"}
 
     tokens = [t.lower() for t in word_tokenize(text) if t.isalpha()]
     stop = set(stopwords.words("english"))
@@ -79,14 +130,14 @@ def analyze_text(text):
 
     polarity = TextBlob(text).sentiment.polarity
 
-    sensational_words = [
+    sensational_words = {
         'click','shocking','unbelievable','hate','secret','miracle','cure',
         'conspiracy','pharma','believe','weird','trick','scientists','baffled',
         'hidden','truth','wake','sheeple','fake','hoax','breaking','news',
         'urgent','alert','warning','scandal','exposed','leaked','bombshell',
         'revolutionary','guaranteed','limited','act','free','money','cancer',
         'theory','deep','state','alternative','facts','zombie','apocalypse'
-    ]
+    }
 
     indicator_count = sum(1 for t in tokens if any(w in t for w in sensational_words))
     punct_indicators = (text.count('!') + text.count('?')) // 2
@@ -101,7 +152,76 @@ def analyze_text(text):
         label = "real"
 
     preview = text.strip()[:300].replace("\n", " ") + ("…" if len(text.strip()) > 300 else "")
-    return {"tokens": tokens[:20], "sentiment": round(polarity, 4), "label": label, "preview": preview, "indicators": total_indicators}
+    return {"tokens": tokens[:20], "sentiment": round(polarity, 4), "label": label, "preview": preview, "indicators": total_indicators, "language": "English"}
+
+def analyze_text_hindi(text):
+    if not text or len(text.strip()) < 10:
+        return {"tokens": [], "sentiment": 0.0, "label": "uncertain", "preview": "", "language": "Hindi"}
+
+    tokens = [t.lower() for t in text.split() if t.isalpha()]
+    tokens = [t for t in tokens if t not in HINDI_STOPWORDS]
+
+    polarity = 0.0
+    try:
+        blob = TextBlob(text)
+        polarity = blob.sentiment.polarity
+    except Exception:
+        pass
+
+    indicator_count = sum(1 for t in tokens if t in HINDI_SENSATIONAL_WORDS)
+    punct_indicators = (text.count('!') + text.count('?')) // 2
+    caps_indicators = 1 if len([t for t in text.split() if t.isupper() and len(t) > 3]) > 1 else 0
+    total_indicators = indicator_count + punct_indicators + caps_indicators
+
+    if total_indicators >= 3 or polarity < -0.25 or polarity > 0.5:
+        label = "fake"
+    elif total_indicators >= 1 or abs(polarity) > 0.15:
+        label = "suspicious"
+    else:
+        label = "real"
+
+    preview = text.strip()[:300].replace("\n", " ") + ("…" if len(text.strip()) > 300 else "")
+    return {"tokens": tokens[:20], "sentiment": round(polarity, 4), "label": label, "preview": preview, "indicators": total_indicators, "language": "Hindi"}
+
+def analyze_text_kannada(text):
+    if not text or len(text.strip()) < 10:
+        return {"tokens": [], "sentiment": 0.0, "label": "uncertain", "preview": "", "language": "Kannada"}
+
+    tokens = [t.lower() for t in text.split() if t]
+    tokens = [t for t in tokens if t not in KANNADA_STOPWORDS]
+
+    polarity = 0.0
+    try:
+        blob = TextBlob(text)
+        polarity = blob.sentiment.polarity
+    except Exception:
+        pass
+
+    indicator_count = sum(1 for t in tokens if t in KANNADA_SENSATIONAL_WORDS)
+    punct_indicators = (text.count('!') + text.count('?')) // 2
+    caps_indicators = 1 if len([t for t in text.split() if t.isupper() and len(t) > 3]) > 1 else 0
+    total_indicators = indicator_count + punct_indicators + caps_indicators
+
+    if total_indicators >= 3 or polarity < -0.25 or polarity > 0.5:
+        label = "fake"
+    elif total_indicators >= 1 or abs(polarity) > 0.15:
+        label = "suspicious"
+    else:
+        label = "real"
+
+    preview = text.strip()[:300].replace("\n", " ") + ("…" if len(text.strip()) > 300 else "")
+    return {"tokens": tokens[:20], "sentiment": round(polarity, 4), "label": label, "preview": preview, "indicators": total_indicators, "language": "Kannada"}
+
+def analyze_text(text, language=None):
+    if not language:
+        language = detect_language(text)
+
+    if language == 'hi':
+        return analyze_text_hindi(text)
+    elif language == 'kn':
+        return analyze_text_kannada(text)
+    else:
+        return analyze_text_english(text)
 
 # ------------------- Google search -------------------
 SERPAPI_KEY = "d53af08d64040d65f5bbedbf4f8a738aecec19137d839257f547b1128702e14e"
@@ -165,11 +285,12 @@ def verify():
     try:
         data = request.get_json(force=True)
         raw = (data.get("url") or data.get("text") or "").strip()
+        language = data.get("language", None)
         if not raw:
             return jsonify({"error":"No input provided"}), 400
 
         search_query, analysis_text = prepare_query_from_input(raw)
-        analysis = analyze_text(analysis_text)
+        analysis = analyze_text(analysis_text, language)
         search_results = google_search(search_query, num=6) if search_query else []
 
         # Adjust label if few corroborations
@@ -181,7 +302,9 @@ def verify():
 
         # Save to DB
         try:
-            rec = FakeNewsReport(text=analysis_text[:2000], label=analysis["label"])
+            detected_lang = analysis.get("language", "en")
+            lang_code = {'English': 'en', 'Hindi': 'hi', 'Kannada': 'kn'}.get(detected_lang, 'en')
+            rec = FakeNewsReport(text=analysis_text[:2000], label=analysis["label"], language=lang_code)
             db.session.add(rec)
             db.session.commit()
         except Exception as e:

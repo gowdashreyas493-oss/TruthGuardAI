@@ -2,6 +2,7 @@
 class TruthGuardAI {
     constructor() {
         this.currentInputType = 'text';
+        this.currentLanguage = 'auto';
         this.init();
     }
 
@@ -23,6 +24,10 @@ class TruthGuardAI {
         document.getElementById('analyzeBtn').addEventListener('click', () => this.analyzeContent());
         document.getElementById('clearBtn').addEventListener('click', () => this.clearInput());
         document.getElementById('refreshReports').addEventListener('click', () => this.loadReports());
+
+        document.getElementById('languageSelect').addEventListener('change', e => {
+            this.currentLanguage = e.target.value === 'auto' ? null : e.target.value;
+        });
 
         document.getElementById('inputText').addEventListener('keydown', e => {
             if (e.ctrlKey && e.key === 'Enter') this.analyzeContent();
@@ -69,6 +74,10 @@ class TruthGuardAI {
                 ? { url: inputText }
                 : { text: inputText };
 
+            if (this.currentLanguage) {
+                payload.language = this.currentLanguage;
+            }
+
             const response = await fetch('/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -81,7 +90,8 @@ class TruthGuardAI {
             // Adjusted to match backend keys
             this.displayResults({
                 sentiment: { label: data.analysis.label, score: data.analysis.sentiment },
-                truth: { label: data.analysis.label, score: 100 - (data.analysis.indicators || 0) * 10 } // optional mapping
+                truth: { label: data.analysis.label, score: 100 - (data.analysis.indicators || 0) * 10 },
+                language: data.analysis.language
             });
             this.displaySearchResults(data.search_results);
             this.updateTruthMeter(100 - (data.analysis.indicators || 0) * 10);
@@ -109,6 +119,10 @@ class TruthGuardAI {
             <div class="result-item">
                 <span class="result-label">Confidence Score</span>
                 <span class="result-value">${data.truth.score}/100</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Detected Language</span>
+                <span class="result-value">${data.language || 'Unknown'}</span>
             </div>
             <div class="result-item">
                 <span class="result-label">Analysis Type</span>
